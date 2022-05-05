@@ -52,7 +52,7 @@ static int terminate_signum;			/* signal sent to process */
 /* Globals */
 int32_t g_opt_sequential = DEFAULT_SEQUENTIAL;	/* # of sequential stressors */
 int32_t g_opt_parallel = DEFAULT_PARALLEL;	/* # of parallel stressors */
-uint64_t g_opt_timeout = TIMEOUT_NOT_SET;	/* timeout in seconds */
+double g_opt_timeout = TIMEOUT_NOT_SET;	/* timeout in seconds */
 uint64_t g_opt_flags = PR_ERROR | PR_INFO | OPT_FLAGS_MMAP_MADVISE;
 volatile bool g_keep_stressing_flag = true;	/* false to exit stressor */
 volatile bool g_caught_sigint = false;		/* true if stopped by SIGINT */
@@ -2444,7 +2444,7 @@ static void MLOCKED_TEXT stress_run(
 	pr_dbg("starting stressors\n");
 	for (n_procs = 0; n_procs < total_procs; n_procs++) {
 		for (proc_current = procs_list; proc_current; proc_current = proc_current->next) {
-			if (g_opt_timeout && (time_now() - time_start > g_opt_timeout))
+			if (g_opt_timeout && (time_now() - time_start > g_opt_timeout*1e-6))
 				goto abort;
 
 			j = proc_current->started_procs;
@@ -2490,7 +2490,7 @@ again:
 						stress_set_timer_slack();
 
 					if (g_opt_timeout)
-						(void)alarm(g_opt_timeout);
+						(void)ualarm(g_opt_timeout, 0);
 					mwc_reseed();
 					(void)snprintf(name, sizeof(name), "%s-%s", g_app_name,
 						munge_underscore(proc_current->stressor->name));
@@ -2579,7 +2579,7 @@ child_exit:
 	}
 	(void)stress_set_handler("stress-ng", false);
 	if (g_opt_timeout)
-		(void)alarm(g_opt_timeout);
+		(void)ualarm(g_opt_timeout, 0);
 
 abort:
 	pr_dbg("%d stressor%s spawned\n", n_procs,
@@ -3352,7 +3352,7 @@ next_opt:
 			show_stressor_names();
 			exit(EXIT_SUCCESS);
 		case OPT_timeout:
-			g_opt_timeout = get_uint64_time(optarg);
+			g_opt_timeout = strtod(optarg, NULL) * 1e6;
 			break;
 		case OPT_version:
 			version();
@@ -3406,13 +3406,12 @@ static void alloc_proc_resources(pid_t **pids, proc_stats_t ***stats, size_t n)
  *  set_default_timeout()
  *	set timeout to a default value if not already set
  */
-static void set_default_timeout(const uint64_t timeout)
+static void set_default_timeout(const double timeout)
 {
 	if (g_opt_timeout == TIMEOUT_NOT_SET) {
 		g_opt_timeout = timeout;
-		pr_inf("defaulting to a %" PRIu64 " second%s run per stressor\n",
-			g_opt_timeout,
-			duration_to_str((double)g_opt_timeout));
+		pr_inf("defaulting to a %f seconds run per stressor\n",
+			g_opt_timeout);
 	}
 }
 
@@ -3424,7 +3423,7 @@ static void stress_setup_sequential(const uint32_t class)
 {
 	proc_info_t *pi;
 
-	set_default_timeout(60);
+	set_default_timeout(60000000);
 
 	for (pi = procs_head; pi; pi = pi->next) {
 		if (pi->stressor->info->class & class)
