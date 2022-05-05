@@ -1489,8 +1489,8 @@ extern void pr_fail_dbg__(const args_t *args, const char *msg);
 #define MAX_ZOMBIES		(1000000)
 #define DEFAULT_ZOMBIES		(8192)
 
-#define TIMEOUT_NOT_SET		(~0ULL)
-#define DEFAULT_TIMEOUT		(60 * 60)
+#define TIMEOUT_NOT_SET		(0)
+#define DEFAULT_TIMEOUT		(60 * 60 * 24)
 #define DEFAULT_BACKOFF		(0)
 #define DEFAULT_LINKS		(8192)
 #define DEFAULT_DIRS		(8192)
@@ -2909,6 +2909,8 @@ typedef struct cpus {
 /* Various global option settings and flags */
 extern const char *g_app_name;		/* Name of application */
 extern shared_t *g_shared;		/* shared memory */
+extern double d_g_opt_timeout;		/* timeout in seconds */
+extern uint64_t i_g_opt_timeout;		/* timeout in seconds */
 extern double g_opt_timeout;		/* timeout in seconds */
 extern uint64_t	g_opt_flags;		/* option flags */
 extern int32_t g_opt_sequential;	/* Number of sequential stressors */
