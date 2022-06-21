@@ -3853,5 +3853,5 @@ int main(int argc, char **argv)
 		exit(EXIT_NOT_SUCCESS);
 	if (!resource_success)
 		exit(EXIT_NO_RESOURCE);
-	exit(EXIT_SUCCESS);
+	return 0;
 }
